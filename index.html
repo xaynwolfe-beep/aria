@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>aria-xayn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        :root {
+            --tw-color-primary: #00d4ff;
+        }
+        .chat-bubble-user {
+            background: linear-gradient(90deg, #00d4ff, #00a8cc);
+        }
+        .message-container::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans">
+    <div class="max-w-screen-xl mx-auto">
+        <!-- HEADER -->
+        <header class="border-b border-zinc-800 bg-zinc-900 sticky top-0 z-50">
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-x-3">
+                    <div class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl leading-none pt-0.5">✦</div>
+                    <h1 class="text-3xl font-semibold tracking-tighter" style="font-family: 'Space Grotesk', sans-serif;">aria-xayn</h1>
+                </div>
+                
+                <div id="user-section" class="hidden items-center gap-x-4">
+                    <div class="flex items-center gap-x-3">
+                        <img id="user-avatar" src="" alt="" class="w-8 h-8 rounded-2xl object-cover border border-zinc-700">
+                        <div>
+                            <p id="user-name" class="font-medium text-sm"></p>
+                            <p id="user-email" class="text-zinc-400 text-xs"></p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" 
+                            class="px-4 py-2 text-sm font-medium rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors flex items-center gap-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4V7m-4 4V7" />
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex h-[calc(100vh-73px)]">
+            <!-- SIGN IN SCREEN -->
+            <div id="signin-screen" class="flex-1 flex items-center justify-center px-6">
+                <div class="max-w-md w-full text-center">
+                    <div class="mx-auto w-24 h-24 bg-gradient-to-br from-cyan-400 to-violet-500 rounded-3xl flex items-center justify-center text-6xl mb-8">✦</div>
+                    <h2 class="text-5xl font-semibold tracking-tighter mb-3" style="font-family: 'Space Grotesk', sans-serif;">Welcome to aria-xayn</h2>
+                    <p class="text-zinc-400 text-lg mb-10">Your personal AI assistant with full Gmail &amp; Google Calendar access.<br>Powered by Groq.</p>
+                    
+                    <button onclick="startGoogleLogin()" 
+                            class="w-full bg-white text-zinc-900 hover:bg-zinc-100 transition-colors flex items-center justify-center gap-x-3 text-lg font-medium py-6 rounded-3xl shadow-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.51h5.92c-.25 1.22-.98 2.26-2.07 2.96v2.7h3.34c1.95-1.8 3.07-4.44 3.07-7.92z"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.34-2.7c-.93.63-2.12 1-3.94 1-3.03 0-5.6-2.05-6.52-4.8H1.7v3.02C3.5 20.5 7.4 23 12 23z"/>
+                            <path d="M5.48 14.54c-.42-.63-.67-1.37-.67-2.17s.25-1.54.67-2.17V7.18H1.7C.9 8.76.4 10.6.4 12.5s.5 3.74 1.3 5.32z"/>
+                            <path d="M12 4.8c1.7 0 3.2.6 4.4 1.6l3.3-3.3C17.46 1.6 14.9.5 12 .5 7.4.5 3.5 3 1.7 7.18l3.78 2.85C6.4 6.85 8.97 4.8 12 4.8z"/>
+                        </svg>
+                        Continue with Google
+                    </button>
+                    
+                    <p class="text-xs text-zinc-500 mt-8">By signing in you grant aria-xayn full access to your Gmail and Calendar.<br>Tokens are stored securely in your browser.</p>
+                </div>
+            </div>
+
+            <!-- CHAT SCREEN -->
+            <div id="chat-screen" class="hidden flex-1 flex">
+                <!-- Sidebar -->
+                <div class="w-72 border-r border-zinc-800 bg-zinc-900 p-6 hidden lg:flex flex-col">
+                    <h3 class="text-sm font-medium text-zinc-400 mb-4 tracking-widest">QUICK ACTIONS</h3>
+                    <div class="space-y-2" id="quick-chips">
+                        <!-- Populated by JS -->
+                    </div>
+                    
+                    <div class="mt-auto pt-8">
+                        <div class="bg-zinc-800 rounded-3xl p-5 text-xs leading-relaxed">
+                            <p class="font-medium mb-2">💡 Pro tip</p>
+                            <p class="text-zinc-400">Ask me anything about your emails or calendar. I can also send emails, create events, or delete items using real data only.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chat -->
+                <div class="flex-1 flex flex-col">
+                    <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
+                        <div class="flex items-center gap-x-3">
+                            <div class="w-8 h-8 bg-gradient-to-br from-cyan-400 to-violet-500 rounded-2xl flex items-center justify-center text-white">✦</div>
+                            <div>
+                                <p class="font-semibold">Aria</p>
+                                <p class="text-emerald-400 text-xs flex items-center gap-x-1">
+                                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                                    Online • Powered by Groq Llama 3.1
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-zinc-400 font-mono">Asia/Kuala Lumpur</div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div id="messages" class="flex-1 overflow-y-auto message-container p-6 space-y-6 bg-[radial-gradient(#27272a_1px,transparent_1px)] bg-[length:30px_30px]">
+                        <!-- JS injected messages -->
+                    </div>
+
+                    <!-- Input -->
+                    <div class="p-6 border-t border-zinc-800 bg-zinc-900">
+                        <div class="flex gap-x-3 bg-zinc-800 rounded-3xl p-2">
+                            <input id="chat-input" 
+                                   type="text" 
+                                   placeholder="Ask about your emails, calendar, or tell me to send something..."
+                                   class="flex-1 bg-transparent px-6 outline-none text-sm placeholder-zinc-400">
+                            <button onclick="sendMessage()" 
+                                    class="w-11 h-11 bg-gradient-to-br from-cyan-400 to-violet-500 hover:brightness-110 transition-all rounded-2xl flex items-center justify-center text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.874L5.999 12zm0 0h7.07" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-center text-zinc-500 text-[10px] mt-4">aria-xayn never invents data • only uses your real Gmail &amp; Calendar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind init
+        function initTailwind() {
+            tailwind.config = {
+                content: [],
+                theme: {
+                    extend: {}
+                },
+                darkMode: 'class'
+            }
+            document.documentElement.classList.add('dark')
+        }
+
+        // Global state
+        let tokens = null
+        let profile = null
+        let messages = []
+
+        const QUICK_ACTIONS = [
+            { label: "📧 Summarize recent emails", prompt: "Summarize my recent emails for me. Highlight anything important." },
+            { label: "📅 Check my calendar", prompt: "What events do I have in the next 30 days? Give me a quick overview." },
+            { label: "📨 Send a new email", prompt: "Help me compose and send a new email." },
+            { label: "🗑️ Clear trash (demo)", prompt: "Show me how to delete an email if I need to." }
+        ]
+
+        function renderQuickChips() {
+            const container = document.getElementById('quick-chips')
+            container.innerHTML = QUICK_ACTIONS.map((chip, i) => `
+                <button onclick="triggerQuickAction(${i})" 
+                        class="w-full text-left px-5 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl transition-all text-sm flex items-center gap-x-3">
+                    <span>${chip.label}</span>
+                </button>
+            `).join('')
+        }
+
+        function triggerQuickAction(index) {
+            const prompt = QUICK_ACTIONS[index].prompt
+            // Add as user message and send immediately
+            messages.push({ role: 'user', content: prompt })
+            renderMessages()
+            sendToBackend()
+        }
+
+        async function startGoogleLogin() {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'getAuthUrl' })
+            })
+            const { authUrl } = await res.json()
+            window.location.href = authUrl
+        }
+
+        async function handleAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search)
+            const code = urlParams.get('code')
+            if (!code) return false
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'exchangeCode', code })
+                })
+                const data = await res.json()
+
+                if (data.access_token) {
+                    tokens = {
+                        access_token: data.access_token,
+                        refresh_token: data.refresh_token,
+                        expires_at: Date.now() + (data.expires_in * 1000)
+                    }
+                    profile = data.profile
+
+                    localStorage.setItem('aria_tokens', JSON.stringify(tokens))
+                    localStorage.setItem('aria_profile', JSON.stringify(profile))
+
+                    // Clean URL
+                    window.history.replaceState({}, document.title, '/')
+                    return true
+                }
+            } catch (e) {
+                console.error(e)
+                alert('Failed to exchange code. Please try again.')
+            }
+            return false
+        }
+
+        function loadStoredAuth() {
+            const storedTokens = localStorage.getItem('aria_tokens')
+            const storedProfile = localStorage.getItem('aria_profile')
+            if (storedTokens && storedProfile) {
+                tokens = JSON.parse(storedTokens)
+                profile = JSON.parse(storedProfile)
+                return true
+            }
+            return false
+        }
+
+        function logout() {
+            localStorage.removeItem('aria_tokens')
+            localStorage.removeItem('aria_profile')
+            tokens = null
+            profile = null
+            messages = []
+            window.location.reload()
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('messages')
+            container.innerHTML = messages.map(msg => {
+                if (msg.role === 'user') {
+                    return `
+                    <div class="flex justify-end">
+                        <div class="max-w-[75%] chat-bubble-user text-white px-6 py-4 rounded-3xl rounded-tr-none text-sm">
+                            ${msg.content}
+                        </div>
+                    </div>`
+                } else {
+                    return `
+                    <div class="flex gap-x-4">
+                        <div class="w-8 h-8 bg-gradient-to-br from-cyan-400 to-violet-500 rounded-2xl flex-shrink-0 flex items-center justify-center text-white text-xl">✦</div>
+                        <div class="max-w-[75%] bg-zinc-800 px-6 py-4 rounded-3xl rounded-tl-none text-sm">
+                            ${msg.content}
+                        </div>
+                    </div>`
+                }
+            }).join('')
+            container.scrollTop = container.scrollHeight
+        }
+
+        async function sendToBackend() {
+            const input = document.getElementById('chat-input')
+            const loading = document.createElement('div')
+            loading.className = 'flex gap-x-4'
+            loading.innerHTML = `
+                <div class="w-8 h-8 bg-gradient-to-br from-cyan-400 to-violet-500 rounded-2xl flex-shrink-0 flex items-center justify-center text-white text-xl animate-pulse">✦</div>
+                <div class="bg-zinc-800 px-6 py-4 rounded-3xl rounded-tl-none text-sm text-zinc-400">Thinking<span class="animate-pulse">...</span></div>
+            `
+            const messagesContainer = document.getElementById('messages')
+            messagesContainer.appendChild(loading)
+            messagesContainer.scrollTop = messagesContainer.scrollHeight
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'chat',
+                        messages: messages,
+                        accessToken: tokens.access_token
+                    })
+                })
+
+                if (res.status === 401) {
+                    alert('Session expired. Please sign in again.')
+                    logout()
+                    return
+                }
+
+                const data = await res.json()
+                messagesContainer.removeChild(loading)
+
+                if (data.reply) {
+                    messages.push({ role: 'assistant', content: data.reply })
+                    renderMessages()
+                } else if (data.error) {
+                    messages.push({ role: 'assistant', content: `❌ ${data.error}` })
+                    renderMessages()
+                }
+            } catch (err) {
+                messagesContainer.removeChild(loading)
+                console.error(err)
+                messages.push({ role: 'assistant', content: 'Sorry, something went wrong. Please try again.' })
+                renderMessages()
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input')
+            const text = input.value.trim()
+            if (!text || !tokens) return
+
+            messages.push({ role: 'user', content: text })
+            renderMessages()
+            input.value = ''
+            sendToBackend()
+        }
+
+        function renderApp() {
+            const isLoggedIn = !!(tokens && profile)
+            
+            document.getElementById('signin-screen').classList.toggle('hidden', isLoggedIn)
+            const chatScreen = document.getElementById('chat-screen')
+            chatScreen.classList.toggle('hidden', !isLoggedIn)
+
+            if (isLoggedIn) {
+                document.getElementById('user-section').classList.remove('hidden')
+                document.getElementById('user-name').textContent = profile.name || 'User'
+                document.getElementById('user-email').textContent = profile.email
+                if (profile.picture) {
+                    document.getElementById('user-avatar').src = profile.picture
+                }
+                renderQuickChips()
+                renderMessages()
+            }
+        }
+
+        // Main app bootstrap
+        async function init() {
+            initTailwind()
+            
+            const callbackHandled = await handleAuthCallback()
+            if (!callbackHandled) {
+                const hasStoredAuth = loadStoredAuth()
+                if (hasStoredAuth) {
+                    renderApp()
+                } else {
+                    // Show sign-in
+                    renderApp()
+                }
+            } else {
+                // After successful exchange
+                renderApp()
+            }
+
+            // Keyboard support
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage()
+            })
+        }
+
+        window.onload = init
+    </script>
+</body>
+</html>

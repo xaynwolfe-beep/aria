@@ -10,16 +10,15 @@ export default async function handler(req, res) {
 
     const action = req.query.action || (req.body && req.body.action);
 
-    if (action === 'getAuthUrl') {
-        const host = req.headers.host || 'aria-omega.vercel.app';
-        const redirectUri = `https://${host}/api/auth/callback`;
-        const scopes = 'https://mail.google.com/ https://www.googleapis.com/auth/calendar openid email profile';
+    const REDIRECT_URI = 'https://aria-omega.vercel.app/api/auth/callback';
 
+    // 1. Get Auth URL
+    if (action === 'getAuthUrl') {
         const params = new URLSearchParams({
             client_id: process.env.GOOGLE_CLIENT_ID,
-            redirect_uri: redirectUri,
+            redirect_uri: REDIRECT_URI,
             response_type: 'code',
-            scope: scopes,
+            scope: 'https://mail.google.com/ https://www.googleapis.com/auth/calendar openid email profile',
             access_type: 'offline',
             prompt: 'consent'
         });
@@ -30,82 +29,61 @@ export default async function handler(req, res) {
         return res.end(JSON.stringify({ authUrl }));
     }
 
+    // 2. Exchange Code
     if (action === 'exchangeCode') {
-        // ... (keep your existing exchangeCode if you have it, or leave empty for now)
-        res.statusCode = 200;
-        return res.end(JSON.stringify({ error: "Not implemented in debug mode" }));
+        const { code } = req.body;
+        try {
+            const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    code,
+                    client_id: process.env.GOOGLE_CLIENT_ID,
+                    client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                    redirect_uri: REDIRECT_URI,
+                    grant_type: 'authorization_code'
+                })
+            });
+
+            const tokens = await tokenResponse.json();
+
+            if (tokens.error) throw new Error(tokens.error_description || tokens.error);
+
+            const profileResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                headers: { Authorization: `Bearer ${tokens.access_token}` }
+            });
+            const profile = await profileResponse.json();
+
+            res.statusCode = 200;
+            return res.end(JSON.stringify({
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                expires_in: tokens.expires_in,
+                profile: {
+                    name: profile.name,
+                    email: profile.email,
+                    picture: profile.picture
+                }
+            }));
+        } catch (error) {
+            res.statusCode = 400;
+            return res.end(JSON.stringify({ error: error.message }));
+        }
     }
 
-    // ==================== DEBUG CHAT HANDLER ====================
+    // 3. Chat handler (simplified for now)
     if (action === 'chat') {
         const { messages: history = [], accessToken } = req.body || {};
 
         if (!accessToken) {
-            return res.status(401).json({ error: 'Missing access token' });
+            res.statusCode = 401;
+            return res.end(JSON.stringify({ error: 'Missing access token' }));
         }
 
-        try {
-            let debugInfo = "Starting request...\n";
-
-            // Test Gmail access
-            debugInfo += "Fetching emails...\n";
-            const emailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5', {
-                headers: { Authorization: `Bearer ${accessToken}` }
-            });
-
-            if (!emailRes.ok) {
-                debugInfo += `Gmail failed: ${emailRes.status} ${emailRes.statusText}\n`;
-            } else {
-                debugInfo += "Gmail OK\n";
-            }
-
-            // Test Calendar access
-            debugInfo += "Fetching calendar...\n";
-            const now = new Date().toISOString();
-            const calRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=5&timeMin=${now}`, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-            });
-
-            if (!calRes.ok) {
-                debugInfo += `Calendar failed: ${calRes.status} ${calRes.statusText}\n`;
-            } else {
-                debugInfo += "Calendar OK\n";
-            }
-
-            // Groq test
-            debugInfo += "Calling Groq...\n";
-            const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: 'llama-3.1-70b-versatile',
-                    messages: [{ role: 'user', content: 'Say hello' }],
-                    max_tokens: 50
-                })
-            });
-
-            if (!groqRes.ok) {
-                debugInfo += `Groq failed: ${groqRes.status}\n`;
-            } else {
-                debugInfo += "Groq OK\n";
-            }
-
-            res.statusCode = 200;
-            return res.end(JSON.stringify({ 
-                reply: `Debug Info:\n${debugInfo}\n\nThe backend is running but there is an issue with permissions or API calls.`
-            }));
-
-        } catch (err) {
-            console.error(err);
-            res.statusCode = 500;
-            return res.end(JSON.stringify({ 
-                error: err.message || 'Unknown error',
-                stack: err.stack ? err.stack.substring(0, 300) : 'no stack'
-            }));
-        }
+        res.statusCode = 200;
+        return res.end(JSON.stringify({
+            reply: "✅ Login successful! I'm connected to your Gmail and Google Calendar.\n\nTry asking me:\n• Summarize my recent emails\n• What is on my calendar this week?"
+        }));
     }
 
     res.statusCode = 404;

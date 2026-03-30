@@ -6,24 +6,3 @@
     "dev": "vercel dev"
   }
 }
-```
-
----
-
-## What to do now — step by step:
-
-1. Go to your GitHub repo: `https://github.com/xaynwolfe-beep/aria`
-2. Click on `api/chat.js` → click the **pencil (edit) icon** → select all → delete everything → paste the new `api/chat.js` code above → click **Commit changes**
-3. Do the same for `api/auth/callback.js`
-4. Do the same for `package.json`
-5. Go to Vercel dashboard → wait for auto-deploy to finish (green "Ready")
-6. Open your app, **logout**, then **sign in again with Google**
-7. Try: *"Summarize my recent emails"*
-
-The AI should now reply with your **real emails and calendar events**.
-
----
-
-**If you still get an error**, open this URL and paste what you see:
-```
-https://aria-omega.vercel.app/api/chat?action=getAuthUrl

@@ -1,13 +1,10 @@
 {
   "name": "aria-xayn",
   "version": "1.0.0",
-  "description": "AI assistant with Gmail and Calendar",
   "type": "module",
   "scripts": {
     "dev": "vercel dev",
+    "build": "vercel build",
     "deploy": "vercel --prod"
-  },
-  "engines": {
-    "node": ">=18"
   }
 }
